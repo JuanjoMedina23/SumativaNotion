@@ -16,7 +16,8 @@ export default function ProfileScreen() {
     setError("");
     const validation = profileUpdateSchema.safeParse({ displayName, photoURL });
     if (!validation.success) {
-      setError(validation.error.errors[0].message);
+      const messages = validation.error.issues.map(issue => issue.message).join(", ");
+      setError(messages);
       return;
     }
 

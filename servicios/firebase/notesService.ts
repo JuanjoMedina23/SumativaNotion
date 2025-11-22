@@ -17,7 +17,7 @@ import {
 const db = getFirestore(app);
 
 export const notesService = {
-  // ✅ Crear nota
+  //  Crear nota
   createNote: async (userId: string, data: { title: string; content: string }) => {
     try {
       await addDoc(collection(db, "users", userId, "notes"), {
@@ -32,7 +32,7 @@ export const notesService = {
     }
   },
 
-  // ✅ Editar nota
+  //  Editar nota
   updateNote: async (
     userId: string,
     noteId: string,
@@ -50,7 +50,7 @@ export const notesService = {
     }
   },
 
-  // ✅ Eliminar nota
+  // Eliminar nota
   deleteNote: async (userId: string, noteId: string) => {
     try {
       const noteRef = doc(db, "users", userId, "notes", noteId);
@@ -61,7 +61,7 @@ export const notesService = {
     }
   },
 
-  // ✅ Obtener notas en tiempo real
+  //  Obtener notas en tiempo real
   listenNotes: (
     userId: string,
     callback: (notes: any[]) => void
@@ -83,7 +83,7 @@ export const notesService = {
     }
   },
 
-  // ✅ Obtener 1 nota por ID
+  // Obtener 1 nota por ID
   getNoteById: async (userId: string, noteId: string) => {
     try {
       const noteRef = doc(db, "users", userId, "notes", noteId);

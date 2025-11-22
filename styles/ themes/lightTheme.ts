@@ -1,10 +1,10 @@
 export const lightTheme = {
   colors: {
-    background: "#FFFFFF",
+    background: "#ffffff",
     text: "#000000",
-    textSecondary: "#6B7280", // 👈 agregado
-    primary: "#3B82F6",
-    card: "#F3F4F6",
-    border: "#E5E7EB", // 👈 agregado
+    textSecondary: "#555555",
+    primary: "#1D4ED8",
+    card: "#f5f5f5",
+    border: "#e5e5e5",
   },
 };

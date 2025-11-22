@@ -1,10 +1,10 @@
 export const halloweenTheme = {
   colors: {
-    background: "#1a0f00",
-    text: "#ffde9c",
-    textSecondary: "#e2b974",
-    primary: "#ff7b00",
-    card: "#261500",
-    border: "#3d2000",
+    background: "#1a1a1a",
+    text: "#ff7518",
+    textSecondary: "#f0a64a",
+    primary: "#ff0000",
+    card: "#2e2e2e",
+    border: "#5c2a00",
   },
 };

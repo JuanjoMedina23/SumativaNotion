@@ -1,58 +1,66 @@
-// src/navigation/RootNavigator.tsx
 import React from "react";
-import { NavigationContainer, Theme as NavTheme } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 
+// Pantallas
+import TabNavigator from "./TabNavigator";
 import LoginScreen from "../screens/auth/ LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
-import TabNavigator from "./TabNavigator";
+import NoteDetailScreen from "../screens/notes/NoteDetailScreen";
+import CreateNoteScreen from "../screens/notes/CreateNoteScreen";
 
-export type RootStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  Main: undefined;
-};
+const Stack = createNativeStackNavigator();
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
-export default function RootNavigator() {
+const RootNavigator: React.FC = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
 
-  if (loading) {
-    return null; 
-  }
+  // Si está cargando usuario, puedes poner un loader
+  if (loading) return null;
 
-  // Adaptar tu tema personalizado a lo que exige React Navigation
-  const navigationTheme: NavTheme = {
-    dark: false,
+  // 💡 Usamos DefaultTheme para NO romper TypeScript
+  const navTheme = {
+    ...DefaultTheme,
     colors: {
+      ...DefaultTheme.colors,
       primary: theme.colors.primary,
       background: theme.colors.background,
       card: theme.colors.card,
       text: theme.colors.text,
-      border: "#00000020",
+      border: theme.colors.border,
       notification: theme.colors.primary,
     },
   };
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer theme={navTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
-          // Si hay usuario → ir a la app
-          <Stack.Screen name="Main" component={TabNavigator} />
-        ) : (
-          // Si no → pantallas de autenticación
+
+        {/* 🔐 Si NO hay usuario → Login */}
+        {!user ? (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
           </>
+        ) : (
+          <>
+            {/* 🧭 Tabs principales */}
+            <Stack.Screen name="MainTabs" component={TabNavigator} />
+
+            {/* 📝 Ver nota */}
+            <Stack.Screen name="NoteDetail" component={NoteDetailScreen} />
+
+            {/* ✏️ Crear nota */}
+            <Stack.Screen name="CreateNote" component={CreateNoteScreen} />
+          </>
         )}
+
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
+};
+
+export default RootNavigator;

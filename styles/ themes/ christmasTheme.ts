@@ -1,10 +1,10 @@
-export default {
-    name: "christmas",
-    colors: {
-      background: "bg-green-100",
-      text: "text-red-700",
-      card: "bg-red-50",
-      primary: "text-green-700",
-    },
-  };
-  
+export const christmasTheme = {
+  colors: {
+    background: "#144d14",
+    text: "#fff",
+    textSecondary: "#e2e2e2",
+    primary: "#ff1d1d",
+    card: "#1c701c",
+    border: "#2f8f2f",
+  },
+};

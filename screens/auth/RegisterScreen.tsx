@@ -30,7 +30,8 @@ export default function RegisterScreen({ navigation }: any) {
     });
 
     if (!validation.success) {
-      setError(validation.error.errors[0].message);
+      const messages = validation.error.issues.map(issue => issue.message).join(", ");
+      setError(messages);
       return;
     }
 

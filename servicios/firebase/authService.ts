@@ -1,98 +1,165 @@
-import axios from "axios";
+import { app } from "../../servicios/firebase/firebaseConfig";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile as firebaseUpdateProfile, // ← 🔧 FIX IMPORTACIÓN
+  GoogleAuthProvider,
+  signInWithCredential,
+} from "firebase/auth";
 
-const API_URL = "https://identitytoolkit.googleapis.com/v1"; // Firebase REST API
-const API_KEY = "AIzaSyD4CSV2aZ-BnLA5C_Tn9wL3A4hvDUT1gT8"; // reemplaza con tu clave
+import * as Google from "expo-auth-session/providers/google";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const auth = getAuth(app);
 
 interface User {
   uid: string;
   email: string;
   displayName?: string;
   photoURL?: string;
-  idToken?: string;
 }
 
 export const authService = {
+  // ✅ LOGIN CON EMAIL Y PASSWORD
   login: async (email: string, password: string): Promise<User> => {
     try {
-      const res = await axios.post(`${API_URL}/accounts:signInWithPassword?key=${API_KEY}`, {
-        email,
-        password,
-        returnSecureToken: true,
-      });
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      return {
-        uid: res.data.localId,
-        email: res.data.email,
-        displayName: res.data.displayName || "",
-        photoURL: res.data.photoUrl || "",
-        idToken: res.data.idToken,
+      const userData: User = {
+        uid: user.uid,
+        email: user.email || "",
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
       };
+
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+      return userData;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error?.message || "Error al iniciar sesión");
+      throw new Error(error.message || "Error al iniciar sesión");
     }
   },
 
-  register: async (email: string, password: string): Promise<User> => {
+  // ✅ LOGIN CON GOOGLE
+  loginWithGoogle: async (request: any, promptAsync: any): Promise<User> => {
     try {
-      const res = await axios.post(`${API_URL}/accounts:signUp?key=${API_KEY}`, {
-        email,
-        password,
-        returnSecureToken: true,
-      });
+      const result = await promptAsync();
 
-      return {
-        uid: res.data.localId,
-        email: res.data.email,
-        displayName: "",
-        photoURL: "",
-        idToken: res.data.idToken,
+      if (result?.type !== "success") {
+        throw new Error("Inicio de sesión con Google cancelado");
+      }
+
+      if (!result.authentication?.idToken) {
+        throw new Error("No se obtuvo token de Google");
+      }
+
+      const credential = GoogleAuthProvider.credential(result.authentication.idToken);
+
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+
+      const userData: User = {
+        uid: user.uid,
+        email: user.email || "",
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
       };
+
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+      return userData;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error?.message || "Error al registrar usuario");
+      throw new Error(error.message || "Error al iniciar sesión con Google");
     }
   },
 
-  logout: async (): Promise<void> => {
-    // Firebase no requiere logout para REST, solo elimina token local
-    return Promise.resolve();
+  // ✅ REGISTRO CON EMAIL Y PASSWORD
+  register: async (email: string, password: string, displayName?: string): Promise<User> => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (displayName) {
+        await firebaseUpdateProfile(user, { displayName });
+      }
+
+      const userData: User = {
+        uid: user.uid,
+        email: user.email || "",
+        displayName: displayName || "",
+        photoURL: "",
+      };
+
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+      return userData;
+    } catch (error: any) {
+      throw new Error(error.message || "Error al registrar usuario");
+    }
   },
 
+  // ✅ LOGOUT
+  logout: async (): Promise<void> => {
+    try {
+      await signOut(auth);
+      await AsyncStorage.removeItem("user");
+    } catch (error: any) {
+      throw new Error(error.message || "Error al cerrar sesión");
+    }
+  },
+
+  // ✅ ACTUALIZAR PERFIL (NOMBRE / FOTO)
   updateProfile: async (
-    uid: string,
     data: { displayName?: string; photoURL?: string }
   ): Promise<User> => {
     try {
-      const token = await getIdToken(); // función para recuperar idToken de AsyncStorage
-      const res = await axios.post(
-        `${API_URL}/accounts:update?key=${API_KEY}`,
-        {
-          idToken: token,
-          displayName: data.displayName,
-          photoUrl: data.photoURL,
-          returnSecureToken: true,
-        }
-      );
+      const user = auth.currentUser;
+      if (!user) throw new Error("Usuario no logueado");
 
-      return {
-        uid: res.data.localId,
-        email: res.data.email,
-        displayName: res.data.displayName || "",
-        photoURL: res.data.photoUrl || "",
-        idToken: res.data.idToken,
+      await firebaseUpdateProfile(user, {
+        displayName: data.displayName,
+        photoURL: data.photoURL,
+      });
+
+      const userData: User = {
+        uid: user.uid,
+        email: user.email || "",
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
       };
+
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+      return userData;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error?.message || "Error al actualizar perfil");
+      throw new Error(error.message || "Error al actualizar perfil");
     }
+  },
+
+  // ✅ OBTENER USUARIO GUARDADO EN LOCAL
+  getCurrentUser: async (): Promise<User | null> => {
+    try {
+      const json = await AsyncStorage.getItem("user");
+      return json ? JSON.parse(json) : null;
+    } catch (error) {
+      console.error("Error obteniendo usuario:", error);
+      return null;
+    }
+  },
+
+  // ✅ SABER SI HAY SESIÓN INICIADA
+  isLoggedIn: async (): Promise<boolean> => {
+    const user = await authService.getCurrentUser();
+    return !!user?.uid;
   },
 };
 
-// Función auxiliar para obtener idToken de AsyncStorage
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// 🔧 HOOK PARA USAR GOOGLE LOGIN EN COMPONENTES
+export const useGoogleAuth = () => {
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: "1076516348586-pteir86rk8lf1m1kk8oih7pd6g13uife.apps.googleusercontent.com",
+    iosClientId: "1076516348586-pteir86rk8lf1m1kk8oih7pd6g13uife.apps.googleusercontent.com",
+    androidClientId: "1076516348586-pteir86rk8lf1m1kk8oih7pd6g13uife.apps.googleusercontent.com",
+  });
 
-async function getIdToken(): Promise<string> {
-  const json = await AsyncStorage.getItem("user");
-  if (!json) throw new Error("Usuario no logueado");
-  const user = JSON.parse(json);
-  if (!user.idToken) throw new Error("Token no encontrado");
-  return user.idToken;
-}
+  return { request, response, promptAsync };
+};

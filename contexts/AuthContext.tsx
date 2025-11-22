@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { authService } from "../services/firebase/authService";
+import { authService } from "../servicios/firebase/authService";
 
 interface AuthContextProps {
   user: any;
@@ -59,9 +59,12 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     await AsyncStorage.removeItem("user");
   };
 
+  // ✅ CORREGIDO: ya NO se envía user.uid
   const updateProfile = async (data: { displayName?: string; photoURL?: string }) => {
     if (!user) throw new Error("Usuario no logueado");
-    const updatedUser = await authService.updateProfile(user.uid, data);
+
+    const updatedUser = await authService.updateProfile(data);
+
     setUser(updatedUser);
     await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
   };

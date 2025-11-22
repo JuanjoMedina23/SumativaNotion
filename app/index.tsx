@@ -1,15 +1,12 @@
-import { Text, View } from "react-native";
+// app/index.tsx
+import { Redirect } from "expo-router";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+  const { user } = useAuth();
+
+  // Si hay usuario → ir a notas
+  // Si no → login
+  return user ? <Redirect href="/notes" /> : <Redirect href="/auth/login" />;
 }
+

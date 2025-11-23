@@ -6,6 +6,7 @@ export type Note = {
   title: string;
   content: string;
   createdAt: string;
+  completed: boolean;
 };
 
 export type NotesContextType = {
@@ -14,17 +15,17 @@ export type NotesContextType = {
   updateNote: (id: string, title: string, content: string) => void;
   deleteNote: (id: string) => void;
   getNote: (id: string) => Note | undefined;
+  toggleComplete: (id: string) => void;
+  getFilteredNotes: (filter: "all" | "pending" | "completed") => Note[];
 };
 
-const NotesContext = createContext<NotesContextType | undefined>(undefined);
+const NoteContext = createContext<NotesContextType | undefined>(undefined);
 
-export const NotesProvider = ({ children }: { children: ReactNode }) => {
+export const NoteProvider = ({ children }: { children: ReactNode }) => {
   const [notes, setNotes] = useState<Note[]>([]);
 
-  // STORAGE KEY
   const STORAGE_KEY = "NOTES_DATA";
 
- 
   useEffect(() => {
     (async () => {
       try {
@@ -38,7 +39,6 @@ export const NotesProvider = ({ children }: { children: ReactNode }) => {
     })();
   }, []);
 
- 
   useEffect(() => {
     (async () => {
       try {
@@ -49,47 +49,67 @@ export const NotesProvider = ({ children }: { children: ReactNode }) => {
     })();
   }, [notes]);
 
-  // CRUD
   const createNote = (title: string, content: string) => {
     const newNote: Note = {
       id: Date.now().toString(),
       title,
       content,
       createdAt: new Date().toISOString(),
+      completed: false,
     };
     setNotes((prev) => [newNote, ...prev]);
   };
 
   const updateNote = (id: string, title: string, content: string) => {
-    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, title, content } : n)));
+    setNotes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, title, content } : n))
+    );
   };
 
   const deleteNote = (id: string) => {
     setNotes((prev) => prev.filter((n) => n.id !== id));
   };
 
-  //getNote: devuelve la nota por id (o undefined si no existe)
   const getNote = (id: string) => {
     return notes.find((n) => n.id === id);
   };
 
+  const toggleComplete = (id: string) => {
+    setNotes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, completed: !n.completed } : n))
+    );
+  };
+
+  const getFilteredNotes = (filter: "all" | "pending" | "completed") => {
+    switch (filter) {
+      case "pending":
+        return notes.filter((n) => !n.completed);
+      case "completed":
+        return notes.filter((n) => n.completed);
+      default:
+        return notes;
+    }
+  };
+
   return (
-    <NotesContext.Provider
+    <NoteContext.Provider
       value={{
         notes,
         createNote,
         updateNote,
         deleteNote,
         getNote,
+        toggleComplete,
+        getFilteredNotes,
       }}
     >
       {children}
-    </NotesContext.Provider>
+    </NoteContext.Provider>
   );
 };
 
 export const useNotes = () => {
-  const context = useContext(NotesContext);
-  if (!context) throw new Error("useNotes must be used within a NotesProvider");
+  const context = useContext(NoteContext);
+  if (!context) throw new Error("useNotes must be used within a NoteProvider");
   return context;
 };

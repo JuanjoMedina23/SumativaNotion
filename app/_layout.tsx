@@ -1,11 +1,11 @@
 import { Stack } from "expo-router";
 import TabsNavigator from "../components/TabsNavigator";
-import { NotesProvider } from "../contexts/NoteContext";
+import { NoteProvider } from "../contexts/NoteContext";
 import { View } from "react-native";
 import "../global.css"
 export default function RootLayout() {
   return (
-    <NotesProvider>
+    <NoteProvider>
       <View className="flex-1">
         {/* Contenido de las pantallas */}
         <Stack screenOptions={{ headerShown: false }} />
@@ -13,6 +13,6 @@ export default function RootLayout() {
         {/* Tabs SIEMPRE visibles */}
         <TabsNavigator />
       </View>
-    </NotesProvider>
+    </NoteProvider>
   );
 }

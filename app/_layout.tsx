@@ -2,7 +2,7 @@
 import { Stack } from "expo-router";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
-
+import "../global.css";
 export default function RootLayout() {
   return (
     <AuthProvider>

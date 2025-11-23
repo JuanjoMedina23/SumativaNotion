@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { View, ActivityIndicator } from "react-native";
-
+import "../global.css";
 export default function Index() {
   const { user, loading } = useAuth();
   const router = useRouter();

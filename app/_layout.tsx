@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import TabsNavigator from "../components/TabsNavigator";
 import { NotesProvider } from "../contexts/NoteContext";
 import { View } from "react-native";
-
+import "../global.css"
 export default function RootLayout() {
   return (
     <NotesProvider>

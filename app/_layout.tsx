@@ -1,18 +1,18 @@
-// app/_layout.tsx
 import { Stack } from "expo-router";
-import { AuthProvider } from "../contexts/AuthContext";
-import { ThemeProvider } from "../contexts/ThemeContext";
-import "../global.css";
+import TabsNavigator from "../components/TabsNavigator";
+import { NotesProvider } from "../contexts/NoteContext";
+import { View } from "react-native";
+
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
-      </ThemeProvider>
-    </AuthProvider>
+    <NotesProvider>
+      <View className="flex-1">
+        {/* Contenido de las pantallas */}
+        <Stack screenOptions={{ headerShown: false }} />
+
+        {/* Tabs SIEMPRE visibles */}
+        <TabsNavigator />
+      </View>
+    </NotesProvider>
   );
 }

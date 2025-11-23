@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../servicios/firebase/firebaseConfig";
 import { useAuth } from "../../contexts/AuthContext";
@@ -9,12 +9,12 @@ interface Note {
   id: string;
   title: string;
   content: string;
-  createdAt: string;
+  createdAt: any;
   userId: string;
 }
 
 const NotesListScreen = () => {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const { user } = useAuth();
 
   const [notes, setNotes] = useState<Note[]>([]);
@@ -23,27 +23,17 @@ const NotesListScreen = () => {
   useEffect(() => {
     if (!user) return;
 
-    const q = query(
-      collection(db, "notes"),
-      orderBy("createdAt", "desc")
-    );
+    const notesRef = collection(db, "notes");
+    const q = query(notesRef, orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const userNotes: Note[] = [];
-
       snapshot.forEach((doc) => {
         const data = doc.data();
         if (data.userId === user.uid) {
-          userNotes.push({
-            id: doc.id,
-            title: data.title,
-            content: data.content,
-            createdAt: data.createdAt,
-            userId: data.userId,
-          });
+          userNotes.push({ id: doc.id, ...data } as Note);
         }
       });
-
       setNotes(userNotes);
       setLoading(false);
     });
@@ -62,8 +52,6 @@ const NotesListScreen = () => {
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
-
-      {/* BOTÓN PARA CREAR NOTA */}
       <TouchableOpacity
         style={{
           backgroundColor: "#007AFF",
@@ -72,14 +60,13 @@ const NotesListScreen = () => {
           marginBottom: 20,
           alignItems: "center",
         }}
-        onPress={() => navigation.navigate("CreateNote")}
+        onPress={() => router.push("/CreateNote")}
       >
         <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
           + Crear Nota
         </Text>
       </TouchableOpacity>
 
-      {/* LISTA DE NOTAS */}
       {notes.length === 0 ? (
         <Text style={{ textAlign: "center", marginTop: 40, fontSize: 16 }}>
           No tienes notas todavía 📝
@@ -96,7 +83,7 @@ const NotesListScreen = () => {
                 marginBottom: 12,
                 borderRadius: 8,
               }}
-              onPress={() => navigation.navigate("NoteDetail", { noteId: item.id })}
+              onPress={() => router.push(`/NoteDetail/${item.id}`)}
             >
               <Text style={{ fontSize: 18, fontWeight: "bold" }}>{item.title}</Text>
               <Text numberOfLines={2} style={{ marginTop: 5 }}>

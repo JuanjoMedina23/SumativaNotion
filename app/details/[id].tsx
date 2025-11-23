@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   SafeAreaView,
   View,
@@ -9,11 +9,13 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useNotes } from "../../contexts/NoteContext";
 import { ArrowLeft, Pencil, Trash2, Check, X } from "lucide-react-native";
+import { ThemeContext } from "../../contexts/ThemeContext";
 
 export default function NoteDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { getNote, updateNote, deleteNote } = useNotes();
+  const { theme } = useContext(ThemeContext);
 
   const note = getNote(id as string);
 
@@ -33,25 +35,25 @@ export default function NoteDetail() {
 
   if (!note) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center">
-        <Text>No encontrada</Text>
+      <SafeAreaView style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.background }}>
+        <Text style={{ color: theme.text }}>No encontrada</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-100 p-4">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background, padding: 16 }}>
 
       {/* Top Bar */}
-      <View className="flex-row items-center justify-between mb-6">
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={28} color="#1f2937" />
+          <ArrowLeft size={28} color={theme.text} />
         </TouchableOpacity>
 
         {!isEditing && (
-          <View className="flex-row gap-4">
+          <View style={{ flexDirection: "row", gap: 16 }}>
             <TouchableOpacity onPress={() => setIsEditing(true)}>
-              <Pencil size={26} color="#1f2937" />
+              <Pencil size={26} color={theme.text} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleDelete}>
@@ -61,13 +63,13 @@ export default function NoteDetail() {
         )}
 
         {isEditing && (
-          <View className="flex-row gap-4">
+          <View style={{ flexDirection: "row", gap: 16 }}>
             <TouchableOpacity onPress={() => setIsEditing(false)}>
               <X size={28} color="#dc2626" />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSave}>
-              <Check size={28} color="#16a34a" />
+              <Check size={28} color={theme.primary} />
             </TouchableOpacity>
           </View>
         )}
@@ -75,29 +77,48 @@ export default function NoteDetail() {
 
       {/* Content */}
       {isEditing ? (
-        <View className="flex-1">
+        <View style={{ flex: 1 }}>
           <TextInput
             value={title}
             onChangeText={setTitle}
-            className="border-b border-gray-300 text-2xl font-bold mb-4"
+            style={{
+              borderBottomWidth: 1,
+              borderBottomColor: theme.text + "66",
+              fontSize: 24,
+              fontWeight: "bold",
+              marginBottom: 16,
+              color: theme.text,
+            }}
           />
 
           <TextInput
             value={content}
             onChangeText={setContent}
             multiline
-            className="border border-gray-200 p-3 flex-1 rounded-xl text-base"
+            style={{
+              borderWidth: 1,
+              borderColor: theme.text + "33",
+              padding: 12,
+              borderRadius: 16,
+              flex: 1,
+              fontSize: 16,
+              color: theme.text,
+              textAlignVertical: "top",
+              backgroundColor: theme.card,
+            }}
           />
         </View>
       ) : (
-        <View className="flex-1">
-          <Text className="text-3xl font-bold mb-3">{note.title}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 12, color: theme.text }}>
+            {note.title}
+          </Text>
 
-          <Text className="text-neutral-700 text-base whitespace-pre-line">
+          <Text style={{ fontSize: 16, color: theme.text, lineHeight: 22 }}>
             {note.content}
           </Text>
 
-          <Text className="text-sm text-gray-500 mt-5">
+          <Text style={{ fontSize: 12, color: theme.text + "99", marginTop: 20 }}>
             Creada: {new Date(note.createdAt).toLocaleString()}
           </Text>
         </View>

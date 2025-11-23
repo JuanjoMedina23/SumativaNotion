@@ -1,8 +1,9 @@
 import { View, Text, TouchableOpacity, Animated, PanResponder } from "react-native";
 import { router } from "expo-router";
 import { useNotes, Note } from "../contexts/NoteContext";
-import { useRef } from "react";
+import { useRef, useContext } from "react";
 import { CheckCircle2, Circle, Trash2 } from "lucide-react-native";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 interface NoteCardProps {
   note: Note;
@@ -10,6 +11,8 @@ interface NoteCardProps {
 
 export default function NoteCard({ note }: NoteCardProps) {
   const { deleteNote, toggleComplete } = useNotes();
+  const { theme } = useContext(ThemeContext);
+
   const pan = useRef(new Animated.ValueXY()).current;
   const checkScale = useRef(new Animated.Value(1)).current;
 
@@ -41,7 +44,6 @@ export default function NoteCard({ note }: NoteCardProps) {
             deleteNote(note.id);
           });
         } else {
-          // Volver a posición original
           Animated.spring(pan, {
             toValue: { x: 0, y: 0 },
             useNativeDriver: false,
@@ -68,58 +70,87 @@ export default function NoteCard({ note }: NoteCardProps) {
   };
 
   return (
-    <View className="mb-3">
+    <View style={{ marginBottom: 12 }}>
       {/* Background completar (derecha) */}
-      <View className="absolute left-0 right-0 h-full bg-green-500 rounded-xl justify-center pl-4" pointerEvents="none">
+      <View
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          height: "100%",
+          backgroundColor: "#22c55e",
+          borderRadius: 16,
+          justifyContent: "center",
+          paddingLeft: 16,
+        }}
+        pointerEvents="none"
+      >
         <CheckCircle2 size={24} color="white" />
       </View>
 
       {/* Background eliminar (izquierda) */}
-      <View className="absolute left-0 right-0 h-full bg-red-500 rounded-xl justify-center pr-4 items-end" pointerEvents="none">
+      <View
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          height: "100%",
+          backgroundColor: "#dc2626",
+          borderRadius: 16,
+          justifyContent: "center",
+          paddingRight: 16,
+          alignItems: "flex-end",
+        }}
+        pointerEvents="none"
+      >
         <Trash2 size={24} color="white" />
       </View>
 
       {/* Card animada */}
       <Animated.View
         style={[
-          {
-            transform: [{ translateX: pan.x }],
-          },
+          { transform: [{ translateX: pan.x }] },
         ]}
         {...panResponder.panHandlers}
       >
         <TouchableOpacity
           onPress={() => router.push(`/details/${note.id}`)}
-          className={`bg-white p-4 rounded-xl shadow ${
-            note.completed ? "opacity-50" : "opacity-100"
-          }`}
           activeOpacity={0.8}
+          style={{
+            backgroundColor: theme.card,
+            padding: 16,
+            borderRadius: 16,
+            shadowColor: "#000",
+            shadowOpacity: 0.05,
+            shadowRadius: 5,
+            elevation: 3,
+            opacity: note.completed ? 0.5 : 1,
+          }}
         >
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1 mr-3">
+          <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <View style={{ flex: 1, marginRight: 12 }}>
               <Text
-                className={`text-lg font-bold ${
-                  note.completed ? "line-through text-gray-400" : "text-black"
-                }`}
+                style={{
+                  fontSize: 16,
+                  fontWeight: "700",
+                  color: note.completed ? theme.text + "66" : theme.text,
+                  textDecorationLine: note.completed ? "line-through" : "none",
+                }}
               >
                 {note.title}
               </Text>
-              <Text className="text-gray-500 mt-1 text-sm">
+              <Text style={{ fontSize: 12, color: theme.text + "99", marginTop: 4 }}>
                 {note.createdAt ? new Date(note.createdAt).toLocaleString() : ""}
               </Text>
             </View>
 
             {/* Checkbox animado */}
-            <TouchableOpacity
-              onPress={handleCheckPress}
-              className="p-2"
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity onPress={handleCheckPress} activeOpacity={0.7} style={{ padding: 4 }}>
               <Animated.View style={{ transform: [{ scale: checkScale }] }}>
                 {note.completed ? (
-                  <CheckCircle2 size={28} color="#22c55e" />
+                  <CheckCircle2 size={28} color={theme.primary} />
                 ) : (
-                  <Circle size={28} color="#d1d5db" />
+                  <Circle size={28} color={theme.text + "66"} />
                 )}
               </Animated.View>
             </TouchableOpacity>

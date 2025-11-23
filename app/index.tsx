@@ -3,11 +3,14 @@ import { router } from "expo-router";
 import { useNotes } from "../contexts/NoteContext";
 import NoteCard from "../components/NoteCard";
 import { FilePlus2, Notebook, CheckCircle2, Clock, ListTodo } from "lucide-react-native";
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { ThemeContext } from "../contexts/ThemeContext";
+
 
 export default function Home() {
   const { getFilteredNotes } = useNotes();
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
+  const { theme } = useContext(ThemeContext);
 
   const notes = getFilteredNotes(filter);
 
@@ -18,14 +21,14 @@ export default function Home() {
   ] as const;
 
   return (
-    <View className="flex-1 bg-neutral-100 pt-14 px-5">
+    <View style={{ flex: 1, backgroundColor: theme.background, paddingTop: 14, paddingHorizontal: 20 }}>
 
       {/* Header */}
-      <View className="mb-6">
-        <Text className="text-4xl font-extrabold text-neutral-800">
+      <View style={{ marginBottom: 24 }}>
+        <Text style={{ fontSize: 32, fontWeight: "800", color: theme.text }}>
           Mis Notas
         </Text>
-        <Text className="text-neutral-500 mt-1">
+        <Text style={{ color: theme.text + "99", marginTop: 4 }}>
           Organiza tus ideas xd
         </Text>
       </View>
@@ -34,48 +37,56 @@ export default function Home() {
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
-        className="mb-4"
+        style={{ marginBottom: 16 }}
       >
-        {filterConfig.map(({ id, label, icon: Icon }) => (
-          <TouchableOpacity
-            key={id}
-            onPress={() => setFilter(id)}
-            className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
-              filter === id ? "bg-black" : "bg-neutral-200"
-            }`}
-          >
-            <Icon 
-              size={16} 
-              color={filter === id ? "white" : "#737373"} 
-              style={{ marginRight: 6 }}
-            />
-            <Text
-              className={`font-semibold ${
-                filter === id ? "text-white" : "text-neutral-700"
-              }`}
+        {filterConfig.map(({ id, label, icon: Icon }) => {
+          const isActive = filter === id;
+          return (
+            <TouchableOpacity
+              key={id}
+              onPress={() => setFilter(id)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 999,
+                marginRight: 8,
+                backgroundColor: isActive ? theme.primary : theme.card,
+              }}
             >
-              {label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Icon 
+                size={16} 
+                color={isActive ? theme.card : theme.text + "99"} 
+                style={{ marginRight: 6 }}
+              />
+              <Text style={{ 
+                fontWeight: "600", 
+                color: isActive ? theme.card : theme.text + "99" 
+              }}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {/* Lista */}
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
         {notes.length === 0 ? (
-          <View className="items-center mt-20 opacity-70">
-            <Notebook size={70} color="#737373" />
+          <View style={{ alignItems: "center", marginTop: 80, opacity: 0.7 }}>
+            <Notebook size={70} color={theme.text + "99"} />
 
-            <Text className="text-xl font-semibold text-neutral-700 mt-4">
+            <Text style={{ fontSize: 20, fontWeight: "600", color: theme.text, marginTop: 16 }}>
               No hay notas
             </Text>
 
-            <Text className="text-neutral-500 mt-1 text-center">
-              {filter === "pending" && "Todas tus notas están completadas 🎉"}
+            <Text style={{ color: theme.text + "99", marginTop: 4, textAlign: "center" }}>
+              {filter === "pending" && "Todas tus notas están completadas "}
               {filter === "completed" && "No tienes notas completadas aún"}
               {filter === "all" && "Crea tu primera nota con el botón de abajo"}
             </Text>
@@ -88,13 +99,23 @@ export default function Home() {
       {/* Botón flotante */}
       <TouchableOpacity
         onPress={() => router.push("/create")}
-        className="
-          bg-black w-16 h-16 rounded-full 
-          absolute bottom-8 right-8 
-          items-center justify-center shadow-xl
-        "
+        style={{
+          backgroundColor: theme.primary,
+          width: 64,
+          height: 64,
+          borderRadius: 32,
+          position: "absolute",
+          bottom: 32,
+          right: 32,
+          alignItems: "center",
+          justifyContent: "center",
+          shadowColor: "#000",
+          shadowOpacity: 0.3,
+          shadowRadius: 5,
+          elevation: 5,
+        }}
       >
-        <FilePlus2 size={30} color="white" />
+        <FilePlus2 size={30} color={theme.card} />
       </TouchableOpacity>
 
     </View>

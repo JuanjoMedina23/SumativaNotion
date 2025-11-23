@@ -2,9 +2,12 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Link, usePathname } from "expo-router";
 import type { Href } from "expo-router";
 import { Home, FilePlus2, Settings } from "lucide-react-native";
+import { useContext } from "react";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function TabsNavigator() {
   const pathname = usePathname();
+  const { theme } = useContext(ThemeContext);
 
   const tabs: { name: string; href: Href; icon: any }[] = [
     { name: "Inicio", href: "/", icon: Home },
@@ -13,15 +16,36 @@ export default function TabsNavigator() {
   ];
 
   return (
-    <View className="flex-row justify-around bg-white border-t border-gray-300 px-4 py-3">
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-around",
+        backgroundColor: theme.card,
+        borderTopWidth: 1,
+        borderTopColor: theme.text + "33", // ligera transparencia para borde
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+      }}
+    >
       {tabs.map(({ name, href, icon: Icon }) => {
         const active = pathname === href;
 
         return (
-            <Link key={name} href={href} asChild>
-            <TouchableOpacity className="items-center gap-1">
-              <Icon size={26} color={active ? "black" : "#9ca3af"} />
-              <Text className={active ? "text-black" : "text-gray-500"}>
+          <Link key={name} href={href} asChild>
+            <TouchableOpacity
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon size={26} color={active ? theme.primary : theme.text + "99"} />
+              <Text
+                style={{
+                  color: active ? theme.primary : theme.text + "99",
+                  fontSize: 12,
+                  marginTop: 2,
+                }}
+              >
                 {name}
               </Text>
             </TouchableOpacity>

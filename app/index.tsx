@@ -26,7 +26,7 @@ export default function Home() {
       {/* Header */}
       <View style={{ marginBottom: 24 }}>
         <Text style={{ fontSize: 32, fontWeight: "800", color: theme.text }}>
-          Mis Notas
+          MIS NOTAS XD
         </Text>
         <Text style={{ color: theme.text + "99", marginTop: 4 }}>
           Organiza tus ideas xd

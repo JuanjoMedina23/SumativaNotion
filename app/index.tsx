@@ -37,7 +37,8 @@ export default function Home() {
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: 10, paddingVertical: 14 }}
+        contentContainerStyle={{ paddingHorizontal: 12 }}
       >
         {filterConfig.map(({ id, label, icon: Icon }) => {
           const isActive = filter === id;
@@ -48,19 +49,21 @@ export default function Home() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingHorizontal: 16,
-                paddingVertical: 8,
+                height: 28,
+                paddingHorizontal:6 ,
+                paddingVertical: 3,
                 borderRadius: 999,
                 marginRight: 8,
                 backgroundColor: isActive ? theme.primary : theme.card,
               }}
             >
               <Icon 
-                size={16} 
+                size={12} 
                 color={isActive ? theme.card : theme.text + "99"} 
-                style={{ marginRight: 6 }}
+                style={{ marginRight: 4 }}
               />
               <Text style={{ 
+                fontSize: 15,
                 fontWeight: "600", 
                 color: isActive ? theme.card : theme.text + "99" 
               }}>

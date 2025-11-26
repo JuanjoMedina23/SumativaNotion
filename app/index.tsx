@@ -5,7 +5,7 @@ import NoteCard from "../components/NoteCard";
 import { FilePlus2, Notebook, CheckCircle2, Clock, ListTodo } from "lucide-react-native";
 import { useState, useContext } from "react";
 import { ThemeContext } from "../contexts/ThemeContext";
-
+import NoteAi from "../services/NoteAi";
 
 export default function Home() {
   const { getFilteredNotes } = useNotes();
@@ -120,7 +120,8 @@ export default function Home() {
       >
         <FilePlus2 size={30} color={theme.card} />
       </TouchableOpacity>
-
+      {/*Aqui llamo al archivo donde esta la IA */}
+      <NoteAi />
     </View>
   );
 }

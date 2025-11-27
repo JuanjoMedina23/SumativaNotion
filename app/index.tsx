@@ -21,62 +21,64 @@ export default function Home() {
   ] as const;
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background, paddingTop: 14, paddingHorizontal: 20 }}>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      {/* Header y Filtros - Sin flex para mantener tamaño fijo */}
+      <View style={{ paddingTop: 14, paddingHorizontal: 20 }}>
+        {/* Header */}
+        <View style={{ marginBottom: 24 }}>
+          <Text style={{ fontSize: 32, fontWeight: "800", color: theme.text }}>
+            MIS NOTAS XD
+          </Text>
+          <Text style={{ color: theme.text + "99", marginTop: 4 }}>
+            Organiza tus ideas xd
+          </Text>
+        </View>
 
-      {/* Header */}
-      <View style={{ marginBottom: 24 }}>
-        <Text style={{ fontSize: 32, fontWeight: "800", color: theme.text }}>
-          MIS NOTAS XD
-        </Text>
-        <Text style={{ color: theme.text + "99", marginTop: 4 }}>
-          Organiza tus ideas xd
-        </Text>
+        {/* Filtros */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 10, paddingVertical: 14 }}
+          contentContainerStyle={{ paddingHorizontal: 12 }}
+        >
+          {filterConfig.map(({ id, label, icon: Icon }) => {
+            const isActive = filter === id;
+            return (
+              <TouchableOpacity
+                key={id}
+                onPress={() => setFilter(id)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  height: 28,
+                  paddingHorizontal:6 ,
+                  paddingVertical: 3,
+                  borderRadius: 999,
+                  marginRight: 8,
+                  backgroundColor: isActive ? theme.primary : theme.card,
+                }}
+              >
+                <Icon 
+                  size={12} 
+                  color={isActive ? theme.card : theme.text + "99"} 
+                  style={{ marginRight: 4 }}
+                />
+                <Text style={{ 
+                  fontSize: 15,
+                  fontWeight: "600", 
+                  color: isActive ? theme.card : theme.text + "99" 
+                }}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
-      {/* Filtros */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={{ marginBottom: 10, paddingVertical: 14 }}
-        contentContainerStyle={{ paddingHorizontal: 12 }}
-      >
-        {filterConfig.map(({ id, label, icon: Icon }) => {
-          const isActive = filter === id;
-          return (
-            <TouchableOpacity
-              key={id}
-              onPress={() => setFilter(id)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                height: 28,
-                paddingHorizontal:6 ,
-                paddingVertical: 3,
-                borderRadius: 999,
-                marginRight: 8,
-                backgroundColor: isActive ? theme.primary : theme.card,
-              }}
-            >
-              <Icon 
-                size={12} 
-                color={isActive ? theme.card : theme.text + "99"} 
-                style={{ marginRight: 4 }}
-              />
-              <Text style={{ 
-                fontSize: 15,
-                fontWeight: "600", 
-                color: isActive ? theme.card : theme.text + "99" 
-              }}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {/* Lista */}
+      {/* Lista - Con flex: 1 para ocupar el espacio restante */}
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flex: 1, paddingHorizontal: 20 }}
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
@@ -104,8 +106,8 @@ export default function Home() {
         onPress={() => router.push("/create")}
         style={{
           backgroundColor: theme.primary,
-          width: 64,
-          height: 64,
+          width: 65,
+          height: 65,
           borderRadius: 32,
           position: "absolute",
           bottom: 32,
@@ -120,7 +122,8 @@ export default function Home() {
       >
         <FilePlus2 size={30} color={theme.card} />
       </TouchableOpacity>
-      {/*Aqui llamo al archivo donde esta la IA */}
+      
+      {/* Aqui llamo al archivo donde esta la IA */}
       <NoteAi />
     </View>
   );

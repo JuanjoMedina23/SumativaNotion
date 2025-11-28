@@ -1,19 +1,39 @@
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { router } from "expo-router";
-import { useState, useContext } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useState, useContext, useEffect } from "react";
 import { useNotes } from "../contexts/NoteContext";
 import { X, Check } from "lucide-react-native";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { z } from "zod";
 
 export default function CreateNote() {
-  const { createNote } = useNotes();
+  const { createNote, notes } = useNotes();
+  const { theme } = useContext(ThemeContext);
+
+  // Recibir parámetros que vienen desde NoteAi
+  const params = useLocalSearchParams();
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const { theme } = useContext(ThemeContext);
+
+  // Cuando vienen datos desde NoteAi -> rellenar los campos
+  useEffect(() => {
+    if (params.title) setTitle(String(params.title));
+    if (params.content) setContent(String(params.content));
+  }, [params]);
+
+  const noteSchema = z.object({
+    title: z
+      .string()
+      .min(1, "El título no puede estar vacío")
+      .refine((t) => !notes.some((n) => n.title === t), {
+        message: "Ya existe una nota con ese título",
+      }),
+    content: z.string().min(1, "El contenido no puede estar vacío"),
+  });
 
   return (
     <View style={{ flex: 1, padding: 20, backgroundColor: theme.background }}>
-
       {/* Top Bar */}
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         {/* Cancel */}
@@ -24,6 +44,13 @@ export default function CreateNote() {
         {/* Save */}
         <TouchableOpacity
           onPress={() => {
+            const validated = noteSchema.safeParse({ title, content });
+
+            if (!validated.success) {
+              alert(validated.error.issues[0].message);
+              return;
+            }
+
             createNote(title, content);
             router.replace("/");
           }}

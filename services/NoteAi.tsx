@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import {View, Text, TouchableOpacity, Modal, TextInput, ScrollView, ActivityIndicator,} from "react-native";
 import { GoogleGenAI } from "@google/genai";
-import { Bot, Camera, Send, X, BookImage } from "lucide-react-native";
+import { Bot, Camera, Send, X } from "lucide-react-native";
 import { ThemeContext } from "../contexts/ThemeContext";
 import CameraNote from "../components/CameraNote";
+import { useRouter } from "expo-router";
 
 export default function NoteAi() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +15,7 @@ export default function NoteAi() {
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
   const { theme } = useContext(ThemeContext);
+  const router = useRouter();
 
   const scrollRef = useRef<ScrollView>(null);
 
@@ -65,9 +67,9 @@ export default function NoteAi() {
 
     setMessages((prev) => [
       ...prev,
-      { sender: "user",  text: " Enviando foto para análisis..." },
+      { sender: "user", text: " Enviando foto para análisis..." },
     ]);
-    
+
     setLoading(true);
 
     try {
@@ -77,8 +79,12 @@ export default function NoteAi() {
           {
             role: "user",
             parts: [
-              { text: 
-                "Eres un sistema q analiza tareas, ademas puedes ver una imagen si el usuario lo pide :Puedes recommendar como dividir la foto q te manda en tareas mas optimizadas  (Ejemplo: si la cama está desordenada → puedes recomendar que podrías tender la cama)" }, 
+              {
+                text:
+                  "Eres un sistema q analiza tareas, ademas puedes ver una imagen si el usuario lo pide :Puedes recommendar como dividir la foto q te manda en tareas mas optimizadas  (Ejemplo: si la cama está desordenada → puedes recomendar que podrías tender la cama)"
+                  +"Dame el texto generado por ti en un mejor formato sin asteriscos"
+                  +"Pon titulo de acuerdo a lo analizado :)",
+              },
               {
                 inlineData: {
                   mimeType: "image/jpeg",
@@ -91,8 +97,21 @@ export default function NoteAi() {
       });
 
       const aiText = res.text || "No pude interpretar la imagen.";
-
       setMessages((prev) => [...prev, { sender: "ai", text: aiText }]);
+
+      // Extraer titulo y contenido
+      const tituloMatch = aiText.match(/TITULO:\s*(.+)/i);
+      const contenidoMatch = aiText.match(/CONTENIDO:\s*([\s\S]+)/i);
+
+      const titulo = tituloMatch ? tituloMatch[1].trim() : "Análisis de imagen";
+      const contenido = contenidoMatch ? contenidoMatch[1].trim() : aiText;
+
+      // Enviar datos a la pantalla /create
+      router.push(
+        `/create?title=${encodeURIComponent(titulo)}&content=${encodeURIComponent(
+          contenido
+        )}`
+      );
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
@@ -102,7 +121,6 @@ export default function NoteAi() {
 
     setLoading(false);
   }
-
 
   if (openCamera)
     return (

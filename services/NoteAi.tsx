@@ -5,6 +5,7 @@ import { Bot, Camera, Send, X } from "lucide-react-native";
 import { ThemeContext } from "../contexts/ThemeContext";
 import CameraNote from "../components/CameraNote";
 import { useRouter } from "expo-router";
+import Markdown from "react-native-markdown-display";
 
 export default function NoteAi() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,6 +29,89 @@ export default function NoteAi() {
   const ai = new GoogleGenAI({
     apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
   });
+
+  // Estilos personalizados para Markdown usando el theme
+  const markdownStyles = {
+    body: {
+      color: theme.text,
+      fontSize: 14,
+    },
+    heading1: {
+      color: theme.text,
+      fontSize: 20,
+      fontWeight: "bold" as const,
+      marginBottom: 8,
+    },
+    heading2: {
+      color: theme.text,
+      fontSize: 18,
+      fontWeight: "bold" as const,
+      marginBottom: 6,
+    },
+    heading3: {
+      color: theme.text,
+      fontSize: 16,
+      fontWeight: "600" as const,
+      marginBottom: 4,
+    },
+    strong: {
+      color: theme.text,
+      fontWeight: "bold" as const,
+    },
+    em: {
+      color: theme.text,
+      fontStyle: "italic" as const,
+    },
+    text: {
+      color: theme.text,
+    },
+    bullet_list: {
+      marginBottom: 8,
+    },
+    ordered_list: {
+      marginBottom: 8,
+    },
+    list_item: {
+      color: theme.text,
+      marginBottom: 4,
+    },
+    code_inline: {
+      backgroundColor: theme.background,
+      color: theme.accent,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    code_block: {
+      backgroundColor: theme.background,
+      color: theme.text,
+      padding: 8,
+      borderRadius: 6,
+      marginVertical: 8,
+    },
+    fence: {
+      backgroundColor: theme.background,
+      color: theme.text,
+      padding: 8,
+      borderRadius: 6,
+      marginVertical: 8,
+    },
+    blockquote: {
+      backgroundColor: theme.background,
+      borderLeftWidth: 4,
+      borderLeftColor: theme.primary,
+      paddingLeft: 12,
+      paddingVertical: 8,
+      marginVertical: 8,
+    },
+    link: {
+      color: theme.accent,
+    },
+    hr: {
+      backgroundColor: theme.primary,
+      height: 2,
+    },
+  };
 
   /** ------------------ENVIAR MENSAJE DE TEXTO---------------------*/
   async function handleSend() {
@@ -168,7 +252,9 @@ export default function NoteAi() {
               style={{ backgroundColor: theme.primary }}
             >
               <Camera size={22} color={theme.card} />
-              <Text className="text-white ml-2">Tomar foto</Text>
+              <Text style={{ color: theme.card, marginLeft: 8 }}>
+                Tomar foto
+              </Text>
             </TouchableOpacity>
 
             {/* CHAT */}
@@ -177,23 +263,27 @@ export default function NoteAi() {
                 <View
                   key={i}
                   className={`p-3 rounded-xl mb-2 max-w-[80%] ${
-                    msg.sender === "user"
-                      ? "bg-purple-600 self-end"
-                      : "bg-neutral-200 self-start"
+                    msg.sender === "user" ? "self-end" : "self-start"
                   }`}
+                  style={{
+                    backgroundColor:
+                      msg.sender === "user" ? theme.primary : theme.background,
+                  }}
                 >
-                  <Text
-                    className={
-                      msg.sender === "user" ? "text-white" : "text-black"
-                    }
-                  >
-                    {msg.text}
-                  </Text>
+                  {msg.sender === "user" ? (
+                    <Text style={{ color: theme.card }}>{msg.text}</Text>
+                  ) : (
+                    <Markdown style={markdownStyles}>{msg.text}</Markdown>
+                  )}
                 </View>
               ))}
 
               {loading && (
-                <ActivityIndicator className="mt-3" size="small" color="#7c3aed" />
+                <ActivityIndicator
+                  className="mt-3"
+                  size="small"
+                  color={theme.primary}
+                />
               )}
             </ScrollView>
 
@@ -203,7 +293,15 @@ export default function NoteAi() {
                 value={value}
                 onChangeText={setValue}
                 placeholder="Escribe tu mensaje..."
-                className="flex-1 px-4 py-3 rounded-xl bg-neutral-100"
+                placeholderTextColor={theme.text + "80"}
+                style={{
+                  flex: 1,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  borderRadius: 12,
+                  backgroundColor: theme.background,
+                  color: theme.text,
+                }}
               />
 
               <TouchableOpacity

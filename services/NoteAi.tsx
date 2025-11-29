@@ -423,7 +423,7 @@ Mantén las respuestas claras y accionables.`;
                         marginBottom: 16,
                       }}
                     >
-                      Puedo ayudarte a crear, mejorar y organizar tus notas 📝
+                      Puedo ayudarte a crear, mejorar y organizar tus notas 
                     </Text>
                   </View>
 
@@ -436,7 +436,7 @@ Mantén las respuestas claras y accionables.`;
                         fontWeight: "600",
                       }}
                     >
-                      💡 Prueba preguntarme:
+                      Prueba preguntarme:
                     </Text>
                     {quickSuggestions.map((suggestion, index) => (
                       <TouchableOpacity

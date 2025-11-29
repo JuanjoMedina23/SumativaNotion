@@ -1,21 +1,28 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import {View, Text, TouchableOpacity, Modal, TextInput, ScrollView, ActivityIndicator,} from "react-native";
 import { GoogleGenAI } from "@google/genai";
-import { Bot, Camera, Send, X } from "lucide-react-native";
+import { Bot, Camera, Send, X, FileText, BotMessageSquare,PencilRuler, AlignCenter  } from "lucide-react-native";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { useNotes } from "../contexts/NoteContext";
 import CameraNote from "../components/CameraNote";
 import { useRouter } from "expo-router";
 import Markdown from "react-native-markdown-display";
 
+type Message = {
+  id: string;
+  sender: "user" | "ai";
+  text: string;
+  timestamp: Date;
+};
+
 export default function NoteAi() {
   const [isOpen, setIsOpen] = useState(false);
   const [openCamera, setOpenCamera] = useState(false);
-  const [messages, setMessages] = useState<
-    { sender: "user" | "ai"; text: string }[]
-  >([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
   const { theme } = useContext(ThemeContext);
+  const { notes } = useNotes();
   const router = useRouter();
 
   const scrollRef = useRef<ScrollView>(null);
@@ -24,7 +31,7 @@ export default function NoteAi() {
     setTimeout(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
     }, 80);
-  }, [messages]);
+  }, [messages, loading]);
 
   const ai = new GoogleGenAI({
     apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
@@ -117,26 +124,105 @@ export default function NoteAi() {
   async function handleSend() {
     if (!value.trim()) return;
 
-    setMessages((prev) => [...prev, { sender: "user", text: value }]);
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      sender: "user",
+      text: value,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
 
-    const prompt = value;
+    const currentPrompt = value;
     setValue("");
     setLoading(true);
 
     try {
-      const res = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      // Construir historial de conversación completo
+      const conversationHistory = messages.map((msg) => ({
+        role: msg.sender === "user" ? "user" : "model",
+        parts: [{ text: msg.text.replace(/TITULO:\s*.+?(\n|$)/i, '').trim() }],
+      }));
+
+      // Agregar el mensaje actual del usuario
+      conversationHistory.push({
+        role: "user",
+        parts: [{ text: currentPrompt }],
       });
 
-      const aiText =
-        res.text || "No pude generar respuesta, intenta de nuevo.";
+      // Preparar información de notas guardadas (últimas 10 notas)
+      const recentNotes = notes.slice(0, 10);
+      const notesContext = notes.length > 0
+        ? `\n\nNOTAS GUARDADAS DEL USUARIO (últimas ${recentNotes.length}):\n` +
+          recentNotes.map((note, idx) => {
+            const status = note.completed ? "[✓ Completada]" : "[Pendiente]";
+            return `[${idx + 1}] ${status} "${note.title}"\nContenido: ${note.content.substring(0, 200)}${note.content.length > 200 ? '...' : ''}\nCreada: ${new Date(note.createdAt).toLocaleDateString()}\n`;
+          }).join('\n')
+        : '\n\nEl usuario aún no tiene notas guardadas.';
 
-      setMessages((prev) => [...prev, { sender: "ai", text: aiText }]);
+      const systemPrompt = `Eres un asistente experto en productividad y organización de notas. 
+
+Tu objetivo es ayudar al usuario a crear, mejorar y organizar sus notas de forma eficiente.
+${notesContext}
+
+INSTRUCCIONES IMPORTANTES:
+1. Si el usuario pide crear una nota o quiere guardar algo, genera:
+   - Un título descriptivo corto (máximo 6 palabras)
+   - Contenido bien estructurado con formato Markdown
+   - Al FINAL de tu respuesta, en una nueva línea: TITULO: [título aquí]
+
+2. Si el usuario pide mejorar, expandir o reescribir una nota:
+   - Revisa las NOTAS GUARDADAS arriba para encontrar la nota mencionada
+   - Puede decir "mejora mi última nota" → usa la nota [1]
+   - Puede decir "mejora la nota sobre X" → busca por título
+   - Genera una versión mejorada CON el mismo título o uno mejor
+   - Incluye TITULO: al final
+
+3. Si el usuario pregunta sobre sus notas:
+   - Puedes listar, resumir o buscar en las notas guardadas
+   - Sé específico sobre qué notas tiene
+
+4. Para respuestas generales (saludos, preguntas, etc.):
+   - Responde normalmente SIN agregar TITULO:
+   - Sé conciso y útil
+
+5. Usa formato Markdown cuando sea apropiado:
+   - Títulos con #, ##, ###
+   - Listas con - o 1.
+   - Énfasis con **negrita** o *cursiva*
+   - Código con \`backticks\`
+
+Mantén las respuestas claras y accionables.`;
+
+      const res = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: systemPrompt }],
+          },
+          ...conversationHistory,
+        ],
+      });
+
+      const aiText = res.text || "No pude generar respuesta, intenta de nuevo.";
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "ai",
+        text: aiText,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
     } catch (err: any) {
       setMessages((p) => [
         ...p,
-        { sender: "ai", text: "Error: " + err.message },
+        {
+          id: (Date.now() + 1).toString(),
+          sender: "ai",
+          text: "Error: " + err.message,
+          timestamp: new Date(),
+        },
       ]);
     }
 
@@ -149,10 +235,13 @@ export default function NoteAi() {
   async function handlePicture(base64Image: string) {
     setOpenCamera(false);
 
-    setMessages((prev) => [
-      ...prev,
-      { sender: "user", text: " Enviando foto para análisis..." },
-    ]);
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      sender: "user",
+      text: "Enviando foto para análisis...",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
 
     setLoading(true);
 
@@ -165,9 +254,14 @@ export default function NoteAi() {
             parts: [
               {
                 text:
-                  "Eres un sistema q analiza tareas, ademas puedes ver una imagen si el usuario lo pide :Puedes recommendar como dividir la foto q te manda en tareas mas optimizadas  (Ejemplo: si la cama está desordenada → puedes recomendar que podrías tender la cama)"
-                  +"Dame el texto generado por ti en un mejor formato sin asteriscos"
-                  +"Pon titulo de acuerdo a lo analizado :)",
+                  "Eres un sistema que analiza imágenes y genera tareas optimizadas.\n\n" +
+                  "INSTRUCCIONES:\n" +
+                  "1. Analiza la imagen y identifica tareas u objetivos\n" +
+                  "2. Genera recomendaciones específicas y accionables\n" +
+                  "3. Usa formato Markdown para estructurar la información\n" +
+                  "4. Al FINAL, agrega: TITULO: [título descriptivo corto]\n\n" +
+                  "Ejemplo: Si ves una cama desordenada → recomienda 'Tender la cama'\n" +
+                  "Si ves un escritorio → recomienda organizar, limpiar, etc.",
               },
               {
                 inlineData: {
@@ -181,14 +275,19 @@ export default function NoteAi() {
       });
 
       const aiText = res.text || "No pude interpretar la imagen.";
-      setMessages((prev) => [...prev, { sender: "ai", text: aiText }]);
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "ai",
+        text: aiText,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiMessage]);
 
-      // Extraer titulo y contenido
-      const tituloMatch = aiText.match(/TITULO:\s*(.+)/i);
-      const contenidoMatch = aiText.match(/CONTENIDO:\s*([\s\S]+)/i);
-
+      // Extraer titulo y contenido para crear nota automáticamente
+      const tituloMatch = aiText.match(/TITULO:\s*(.+?)(\n|$)/i);
       const titulo = tituloMatch ? tituloMatch[1].trim() : "Análisis de imagen";
-      const contenido = contenidoMatch ? contenidoMatch[1].trim() : aiText;
+      const contenido = aiText.replace(/TITULO:\s*.+?(\n|$)/i, '').trim();
 
       // Enviar datos a la pantalla /create
       router.push(
@@ -199,12 +298,29 @@ export default function NoteAi() {
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
-        { sender: "ai", text: "Error analizando imagen: " + err.message },
+        {
+          id: (Date.now() + 1).toString(),
+          sender: "ai",
+          text: "Error analizando imagen: " + err.message,
+          timestamp: new Date(),
+        },
       ]);
     }
 
     setLoading(false);
   }
+
+  // Sugerencias rápidas
+  const quickSuggestions = [
+    "¿Qué notas tengo guardadas?",
+    "Mejora mi última nota",
+    "Resume mis notas pendientes",
+    "Crea una lista de tareas nueva",
+  ];
+
+  const handleQuickSuggestion = (suggestion: string) => {
+    setValue(suggestion);
+  };
 
   if (openCamera)
     return (
@@ -234,11 +350,16 @@ export default function NoteAi() {
           >
             {/* HEADER */}
             <View className="flex-row items-center justify-between mb-3">
-              <Text
-                style={{ fontSize: 20, fontWeight: "600", color: theme.text }}
-              >
-                Asistente IA
-              </Text>
+              <View>
+                <Text
+                  style={{ fontSize: 20, fontWeight: "600", color: theme.text }}
+                >
+                  Asistente IA
+                </Text>
+                <Text style={{ fontSize: 12, color: theme.text + "80" }}>
+                  {loading ? "Pensando..." : `${notes.length} notas disponibles`}
+                </Text>
+              </View>
 
               <TouchableOpacity onPress={() => setIsOpen(false)}>
                 <X size={26} color={theme.primary} />
@@ -259,31 +380,138 @@ export default function NoteAi() {
 
             {/* CHAT */}
             <ScrollView ref={scrollRef} className="flex-1 mb-2">
-              {messages.map((msg, i) => (
-                <View
-                  key={i}
-                  className={`p-3 rounded-xl mb-2 max-w-[80%] ${
-                    msg.sender === "user" ? "self-end" : "self-start"
-                  }`}
-                  style={{
-                    backgroundColor:
-                      msg.sender === "user" ? theme.primary : theme.background,
-                  }}
-                >
-                  {msg.sender === "user" ? (
-                    <Text style={{ color: theme.card }}>{msg.text}</Text>
-                  ) : (
-                    <Markdown style={markdownStyles}>{msg.text}</Markdown>
-                  )}
+              {messages.length === 0 ? (
+                <View className="flex-1 py-6">
+                  <View className="items-center mb-6">
+                    <Bot size={64} color={theme.primary} />
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: "bold",
+                        color: theme.text,
+                        marginTop: 16,
+                        marginBottom: 8,
+                      }}
+                    >
+                      ¡Hola! Soy tu Asistente IA
+                    </Text>
+                    <Text
+                      style={{
+                        color: theme.text + "CC",
+                        textAlign: "center",
+                        paddingHorizontal: 32,
+                        marginBottom: 16,
+                      }}
+                    >
+                      Puedo ayudarte a crear, mejorar y organizar tus notas 
+                    </Text>
+                    <PencilRuler size={14} color={theme.accent} />
+                  </View>
+                  
+                  <View className="px-2">
+                  
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: theme.text + "99",
+                        marginBottom: 8,
+                        fontWeight: "600",
+                        textAlign: "center",
+                      }}
+                      
+                    >
+                      Prueba preguntarme:
+                    </Text>
+                    <View className="flex-row items-center justify-center">
+                    <BotMessageSquare size={20} color={theme.accent} />
+                    </View>
+                    
+                    {quickSuggestions.map((suggestion, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => handleQuickSuggestion(suggestion)}
+                        className="p-3 rounded-xl mb-2"
+                        style={{
+                          backgroundColor: theme.background,
+                          borderWidth: 1,
+                          borderColor: theme.primary + "30",
+                        }}
+                      >
+                        <Text style={{ color: theme.text }}>{suggestion}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-              ))}
+              ) : (
+                messages.map((msg) => (
+                  <TouchableOpacity
+                    key={msg.id}
+                    className={`p-3 rounded-xl mb-2 max-w-[80%] ${
+                      msg.sender === "user" ? "self-end" : "self-start"
+                    }`}
+                    style={{
+                      backgroundColor:
+                        msg.sender === "user" ? theme.primary : theme.background,
+                    }}
+                    onPress={() => {
+                      if (msg.sender === "ai") {
+                        const tituloMatch = msg.text.match(/TITULO:\s*(.+?)(\n|$)/i);
+                        
+                        if (tituloMatch) {
+                          const titulo = tituloMatch[1].trim();
+                          const contenido = msg.text.replace(/TITULO:\s*.+?(\n|$)/i, '').trim();
+                          
+                          router.push(
+                            `/create?title=${encodeURIComponent(titulo)}&content=${encodeURIComponent(
+                              contenido
+                            )}`
+                          );
+                        }
+                      }
+                    }}
+                    disabled={msg.sender === "user"}
+                    activeOpacity={msg.sender === "ai" ? 0.7 : 1}
+                  >
+                    {msg.sender === "user" ? (
+                      <Text style={{ color: theme.card }}>{msg.text}</Text>
+                    ) : (
+                      <>
+                        <Markdown style={markdownStyles}>
+                          {msg.text.replace(/TITULO:\s*.+?(\n|$)/i, '')}
+                        </Markdown>
+                        {msg.text.match(/TITULO:\s*.+?(\n|$)/i) && (
+                          <View
+                            className="flex-row items-center mt-2 pt-2"
+                            style={{ borderTopWidth: 1, borderTopColor: theme.primary + "30" }}
+                          >
+                            <FileText size={14} color={theme.accent} />
+                            <Text
+                              style={{
+                                fontSize: 11,
+                                color: theme.accent,
+                                marginLeft: 4,
+                                fontWeight: "600",
+                              }}
+                            >
+                              Toca para crear nota
+                            </Text>
+                          </View>
+                        )}
+                      </>
+                    )}
+                  </TouchableOpacity>
+                ))
+              )}
 
               {loading && (
-                <ActivityIndicator
-                  className="mt-3"
-                  size="small"
-                  color={theme.primary}
-                />
+                <View className="items-start mb-3">
+                  <View
+                    className="p-4 rounded-xl"
+                    style={{ backgroundColor: theme.background }}
+                  >
+                    <ActivityIndicator size="small" color={theme.primary} />
+                  </View>
+                </View>
               )}
             </ScrollView>
 
@@ -294,6 +522,8 @@ export default function NoteAi() {
                 onChangeText={setValue}
                 placeholder="Escribe tu mensaje..."
                 placeholderTextColor={theme.text + "80"}
+                multiline
+                maxLength={500}
                 style={{
                   flex: 1,
                   paddingHorizontal: 16,
@@ -301,13 +531,20 @@ export default function NoteAi() {
                   borderRadius: 12,
                   backgroundColor: theme.background,
                   color: theme.text,
+                  maxHeight: 100,
                 }}
+                onSubmitEditing={handleSend}
+                editable={!loading}
               />
 
               <TouchableOpacity
                 onPress={handleSend}
+                disabled={loading || !value.trim()}
                 className="px-4 py-3 rounded-xl"
-                style={{ backgroundColor: theme.primary }}
+                style={{
+                  backgroundColor:
+                    loading || !value.trim() ? theme.text + "30" : theme.primary,
+                }}
               >
                 <Send size={20} color={theme.card} />
               </TouchableOpacity>

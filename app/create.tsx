@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Switch } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState, useContext, useEffect } from "react";
 import { useNotes } from "../contexts/NoteContext";
@@ -18,10 +18,13 @@ export default function CreateNote() {
   const [content, setContent] = useState("");
   const [isPreview, setIsPreview] = useState(false);
 
-  // Cuando vienen datos desde NoteAi -> rellenar los campos
+  // Cuando vienen datos desde NoteAi -> rellenar los campos y activar preview
   useEffect(() => {
     if (params.title) setTitle(String(params.title));
-    if (params.content) setContent(String(params.content));
+    if (params.content) {
+      setContent(String(params.content));
+      setIsPreview(true); // Activar preview automáticamente si viene de IA
+    }
   }, [params]);
 
   const noteSchema = z.object({
@@ -39,77 +42,92 @@ export default function CreateNote() {
     body: {
       color: theme.text,
       fontSize: 14,
+      lineHeight: 20,
     },
     heading1: {
       color: theme.text,
-      fontSize: 24,
+      fontSize: 22,
       fontWeight: "bold" as const,
-      marginBottom: 12,
+      marginTop: 10,
+      marginBottom: 8,
     },
     heading2: {
       color: theme.text,
-      fontSize: 20,
+      fontSize: 19,
       fontWeight: "bold" as const,
-      marginBottom: 10,
+      marginTop: 8,
+      marginBottom: 6,
     },
     heading3: {
       color: theme.text,
-      fontSize: 18,
+      fontSize: 17,
       fontWeight: "600" as const,
-      marginBottom: 8,
+      marginTop: 6,
+      marginBottom: 4,
     },
     strong: {
-      color: theme.text,
       fontWeight: "bold" as const,
     },
     em: {
-      color: theme.text,
       fontStyle: "italic" as const,
     },
-    text: {
+    paragraph: {
       color: theme.text,
+      marginTop: 4,
+      marginBottom: 4,
     },
     bullet_list: {
+      marginTop: 4,
       marginBottom: 8,
     },
     ordered_list: {
+      marginTop: 4,
       marginBottom: 8,
     },
     list_item: {
+      marginTop: 2,
+      marginBottom: 2,
+      flexDirection: "row" as const,
+    },
+    bullet_list_icon: {
       color: theme.text,
-      marginBottom: 4,
+      fontSize: 14,
+    },
+    ordered_list_icon: {
+      color: theme.text,
+      fontSize: 14,
     },
     code_inline: {
       backgroundColor: theme.background,
       color: theme.accent,
       paddingHorizontal: 6,
-      paddingVertical: 3,
+      paddingVertical: 2,
       borderRadius: 4,
-      fontFamily: "monospace" as const,
+      fontSize: 13,
     },
     code_block: {
       backgroundColor: theme.background,
       color: theme.text,
-      padding: 12,
-      borderRadius: 8,
-      marginVertical: 8,
-      fontFamily: "monospace" as const,
+      padding: 10,
+      borderRadius: 6,
+      marginVertical: 6,
+      fontSize: 13,
     },
     fence: {
       backgroundColor: theme.background,
       color: theme.text,
-      padding: 12,
-      borderRadius: 8,
-      marginVertical: 8,
-      fontFamily: "monospace" as const,
+      padding: 10,
+      borderRadius: 6,
+      marginVertical: 6,
+      fontSize: 13,
     },
     blockquote: {
       backgroundColor: theme.background,
-      borderLeftWidth: 4,
+      borderLeftWidth: 3,
       borderLeftColor: theme.primary,
-      paddingLeft: 12,
-      paddingVertical: 8,
-      marginVertical: 8,
+      paddingLeft: 10,
+      paddingVertical: 6,
+      marginVertical: 6,
     },
     link: {
       color: theme.accent,
@@ -117,8 +135,8 @@ export default function CreateNote() {
     },
     hr: {
       backgroundColor: theme.primary,
-      height: 2,
-      marginVertical: 12,
+      height: 1,
+      marginVertical: 8,
     },
   };
 
@@ -131,17 +149,31 @@ export default function CreateNote() {
           <X size={28} color={theme.primary} />
         </TouchableOpacity>
 
-        {/* Preview Toggle */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Edit3 size={18} color={!isPreview ? theme.primary : theme.text + "60"} />
-          <Switch
-            value={isPreview}
-            onValueChange={setIsPreview}
-            trackColor={{ false: theme.background, true: theme.primary }}
-            thumbColor={theme.card}
-          />
-          <Eye size={18} color={isPreview ? theme.primary : theme.text + "60"} />
-        </View>
+        {/* Toggle Preview/Edit */}
+        <TouchableOpacity
+          onPress={() => setIsPreview(!isPreview)}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: theme.card,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 8,
+            gap: 6,
+          }}
+        >
+          {isPreview ? (
+            <>
+              <Edit3 size={18} color={theme.primary} />
+              <Text style={{ color: theme.text, fontSize: 12 }}>Editar</Text>
+            </>
+          ) : (
+            <>
+              <Eye size={18} color={theme.primary} />
+              <Text style={{ color: theme.text, fontSize: 12 }}>Vista Previa</Text>
+            </>
+          )}
+        </TouchableOpacity>
 
         {/* Save */}
         <TouchableOpacity
@@ -172,15 +204,12 @@ export default function CreateNote() {
         placeholderTextColor={theme.text + "99"}
         value={title}
         onChangeText={setTitle}
-        editable={!isPreview}
         style={{
           backgroundColor: theme.card,
           padding: 12,
           borderRadius: 12,
           marginBottom: 12,
           color: theme.text,
-          fontSize: isPreview ? 20 : 16,
-          fontWeight: isPreview ? "bold" : "normal",
         }}
       />
 
@@ -189,7 +218,7 @@ export default function CreateNote() {
         <ScrollView
           style={{
             backgroundColor: theme.card,
-            padding: 16,
+            padding: 12,
             borderRadius: 12,
             flex: 1,
           }}
@@ -204,7 +233,7 @@ export default function CreateNote() {
         </ScrollView>
       ) : (
         <TextInput
-          placeholder="Contenido (soporta Markdown)"
+          placeholder="Contenido"
           placeholderTextColor={theme.text + "99"}
           value={content}
           onChangeText={setContent}

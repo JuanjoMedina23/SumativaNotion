@@ -5,11 +5,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useNotes } from "../../contexts/NoteContext";
 import { ArrowLeft, Pencil, Trash2, Check, X } from "lucide-react-native";
 import { ThemeContext } from "../../contexts/ThemeContext";
+import Markdown from "react-native-markdown-display";
 
 export default function NoteDetail() {
   const { id } = useLocalSearchParams();
@@ -41,6 +43,43 @@ export default function NoteDetail() {
     );
   }
 
+  // Estilos para Markdown
+  const markdownStyles = {
+    body: {
+      color: theme.text,
+      fontSize: 16,
+      lineHeight: 22,
+    },
+    heading1: {
+      color: theme.text,
+      fontSize: 26,
+      fontWeight: "bold" as const,
+      marginBottom: 12,
+    },
+    heading2: {
+      color: theme.text,
+      fontSize: 22,
+      fontWeight: "bold" as const,
+      marginBottom: 10,
+    },
+    paragraph: {
+      marginBottom: 8,
+    },
+    strong: { fontWeight: "bold" as const },
+    em: { fontStyle: "italic" as const },
+    code_inline: {
+      backgroundColor: theme.background,
+      color: theme.accent,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    link: {
+      color: theme.accent,
+      textDecorationLine: "underline" as const,
+    },
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background, padding: 16 }}>
 
@@ -50,7 +89,7 @@ export default function NoteDetail() {
           <ArrowLeft size={28} color={theme.text} />
         </TouchableOpacity>
 
-        {!isEditing && (
+        {!isEditing ? (
           <View style={{ flexDirection: "row", gap: 16 }}>
             <TouchableOpacity onPress={() => setIsEditing(true)}>
               <Pencil size={26} color={theme.text} />
@@ -60,9 +99,7 @@ export default function NoteDetail() {
               <Trash2 size={26} color="#dc2626" />
             </TouchableOpacity>
           </View>
-        )}
-
-        {isEditing && (
+        ) : (
           <View style={{ flexDirection: "row", gap: 16 }}>
             <TouchableOpacity onPress={() => setIsEditing(false)}>
               <X size={28} color="#dc2626" />
@@ -76,8 +113,10 @@ export default function NoteDetail() {
       </View>
 
       {/* Content */}
+
       {isEditing ? (
-        <View style={{ flex: 1 }}>
+        // 🔧 MODO DE EDICIÓN
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
           <TextInput
             value={title}
             onChangeText={setTitle}
@@ -100,28 +139,34 @@ export default function NoteDetail() {
               borderColor: theme.text + "33",
               padding: 12,
               borderRadius: 16,
-              flex: 1,
+              minHeight: 300,
               fontSize: 16,
               color: theme.text,
               textAlignVertical: "top",
               backgroundColor: theme.card,
             }}
           />
-        </View>
-      ) : (
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 12, color: theme.text }}>
-            {note.title}
-          </Text>
+        </ScrollView>
 
-          <Text style={{ fontSize: 16, color: theme.text, lineHeight: 22 }}>
+      ) : (
+        // 👀 MODO LECTURA (Markdown + Scroll)
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
+
+          {/* Markdown en TÍTULO */}
+          <Markdown style={markdownStyles}>
+            {`# ${note.title}`}
+          </Markdown>
+
+          {/* Markdown en CONTENIDO */}
+          <Markdown style={markdownStyles}>
             {note.content}
-          </Text>
+          </Markdown>
 
           <Text style={{ fontSize: 12, color: theme.text + "99", marginTop: 20 }}>
             Creada: {new Date(note.createdAt).toLocaleString()}
           </Text>
-        </View>
+
+        </ScrollView>
       )}
     </SafeAreaView>
   );

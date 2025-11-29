@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import {View, Text, TouchableOpacity, Modal, TextInput, ScrollView, ActivityIndicator,} from "react-native";
 import { GoogleGenAI } from "@google/genai";
-import { Bot, Camera, Send, X, FileText, BotMessageSquare,PencilRuler, AlignCenter  } from "lucide-react-native";
+import { Bot, Camera, Send, X, FileText } from "lucide-react-native";
 import { ThemeContext } from "../contexts/ThemeContext";
 import { useNotes } from "../contexts/NoteContext";
 import CameraNote from "../components/CameraNote";
@@ -42,81 +42,101 @@ export default function NoteAi() {
     body: {
       color: theme.text,
       fontSize: 14,
+      lineHeight: 20,
     },
     heading1: {
       color: theme.text,
-      fontSize: 20,
+      fontSize: 22,
       fontWeight: "bold" as const,
+      marginTop: 10,
       marginBottom: 8,
     },
     heading2: {
       color: theme.text,
-      fontSize: 18,
+      fontSize: 19,
       fontWeight: "bold" as const,
+      marginTop: 8,
       marginBottom: 6,
     },
     heading3: {
       color: theme.text,
-      fontSize: 16,
+      fontSize: 17,
       fontWeight: "600" as const,
+      marginTop: 6,
       marginBottom: 4,
     },
     strong: {
-      color: theme.text,
       fontWeight: "bold" as const,
     },
     em: {
-      color: theme.text,
       fontStyle: "italic" as const,
     },
-    text: {
+    paragraph: {
       color: theme.text,
+      marginTop: 4,
+      marginBottom: 4,
     },
     bullet_list: {
+      marginTop: 4,
       marginBottom: 8,
     },
     ordered_list: {
+      marginTop: 4,
       marginBottom: 8,
     },
     list_item: {
+      marginTop: 2,
+      marginBottom: 2,
+      flexDirection: "row" as const,
+    },
+    bullet_list_icon: {
       color: theme.text,
-      marginBottom: 4,
+      fontSize: 14,
+    },
+    ordered_list_icon: {
+      color: theme.text,
+      fontSize: 14,
     },
     code_inline: {
       backgroundColor: theme.background,
       color: theme.accent,
-      paddingHorizontal: 4,
+      paddingHorizontal: 6,
       paddingVertical: 2,
       borderRadius: 4,
+      fontSize: 13,
     },
     code_block: {
       backgroundColor: theme.background,
       color: theme.text,
-      padding: 8,
+      padding: 10,
       borderRadius: 6,
-      marginVertical: 8,
+      marginVertical: 6,
+      fontSize: 13,
     },
     fence: {
       backgroundColor: theme.background,
       color: theme.text,
-      padding: 8,
+      padding: 10,
       borderRadius: 6,
-      marginVertical: 8,
+      marginVertical: 6,
+      fontSize: 13,
     },
     blockquote: {
       backgroundColor: theme.background,
-      borderLeftWidth: 4,
+      borderLeftWidth: 3,
       borderLeftColor: theme.primary,
-      paddingLeft: 12,
-      paddingVertical: 8,
-      marginVertical: 8,
+      paddingLeft: 10,
+      paddingVertical: 6,
+      marginVertical: 6,
     },
     link: {
       color: theme.accent,
+      textDecorationLine: "underline" as const,
     },
     hr: {
       backgroundColor: theme.primary,
-      height: 2,
+      height: 1,
+      marginVertical: 8,
     },
   };
 
@@ -154,7 +174,7 @@ export default function NoteAi() {
       const notesContext = notes.length > 0
         ? `\n\nNOTAS GUARDADAS DEL USUARIO (últimas ${recentNotes.length}):\n` +
           recentNotes.map((note, idx) => {
-            const status = note.completed ? "[✓ Completada]" : "[Pendiente]";
+            const status = note.completed ? "[✓ Completada]" : "[⏳ Pendiente]";
             return `[${idx + 1}] ${status} "${note.title}"\nContenido: ${note.content.substring(0, 200)}${note.content.length > 200 ? '...' : ''}\nCreada: ${new Date(note.createdAt).toLocaleDateString()}\n`;
           }).join('\n')
         : '\n\nEl usuario aún no tiene notas guardadas.';
@@ -238,7 +258,7 @@ Mantén las respuestas claras y accionables.`;
     const userMessage: Message = {
       id: Date.now().toString(),
       sender: "user",
-      text: "Enviando foto para análisis...",
+      text: "📸 Enviando foto para análisis...",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -403,29 +423,21 @@ Mantén las respuestas claras y accionables.`;
                         marginBottom: 16,
                       }}
                     >
-                      Puedo ayudarte a crear, mejorar y organizar tus notas 
+                      Puedo ayudarte a crear, mejorar y organizar tus notas 📝
                     </Text>
-                    <PencilRuler size={14} color={theme.accent} />
                   </View>
-                  
+
                   <View className="px-2">
-                  
                     <Text
                       style={{
                         fontSize: 12,
                         color: theme.text + "99",
                         marginBottom: 8,
                         fontWeight: "600",
-                        textAlign: "center",
                       }}
-                      
                     >
-                      Prueba preguntarme:
+                      💡 Prueba preguntarme:
                     </Text>
-                    <View className="flex-row items-center justify-center">
-                    <BotMessageSquare size={20} color={theme.accent} />
-                    </View>
-                    
                     {quickSuggestions.map((suggestion, index) => (
                       <TouchableOpacity
                         key={index}
@@ -476,9 +488,11 @@ Mantén las respuestas claras y accionables.`;
                       <Text style={{ color: theme.card }}>{msg.text}</Text>
                     ) : (
                       <>
-                        <Markdown style={markdownStyles}>
-                          {msg.text.replace(/TITULO:\s*.+?(\n|$)/i, '')}
-                        </Markdown>
+                        <View style={{ minWidth: 200 }}>
+                          <Markdown style={markdownStyles}>
+                            {msg.text.replace(/TITULO:\s*.+?(\n|$)/i, '').trim()}
+                          </Markdown>
+                        </View>
                         {msg.text.match(/TITULO:\s*.+?(\n|$)/i) && (
                           <View
                             className="flex-row items-center mt-2 pt-2"

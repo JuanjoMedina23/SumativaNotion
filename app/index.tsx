@@ -22,14 +22,14 @@ export default function Home() {
     { id: "completed", label: "Completadas", icon: CheckCircle2 },
   ] as const;
 
-  // ← AGREGAR ESTA PROTECCIÓN
+  // AGREGAR ESTA PROTECCIÓN
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/auth/login");
     }
   }, [user, loading]);
 
-  // ← AGREGAR ESTE LOADING
+  //  AGREGAR ESTE LOADING
   if (loading) {
     return (
       <View style={{ 
@@ -46,7 +46,7 @@ export default function Home() {
     );
   }
 
-  // ← AGREGAR ESTE GUARD
+ 
   if (!user) {
     return (
       <View style={{ 
@@ -63,7 +63,7 @@ export default function Home() {
     );
   }
 
-  // ← TU CÓDIGO ORIGINAL A PARTIR DE AQUÍ
+ 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       {/* Header y Filtros - Sin flex para mantener tamaño fijo */}

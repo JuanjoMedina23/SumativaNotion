@@ -1,14 +1,16 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { useNotes } from "../contexts/NoteContext";
+import { useAuth } from "../contexts/AuthContext";
 import NoteCard from "../components/NoteCard";
 import { FilePlus2, Notebook, CheckCircle2, Clock, ListTodo } from "lucide-react-native";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { ThemeContext } from "../contexts/ThemeContext";
 import NoteAi from "../services/NoteAi";
 
 export default function Home() {
   const { getFilteredNotes } = useNotes();
+  const { user, loading } = useAuth(); // ← AGREGAR ESTO
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
   const { theme } = useContext(ThemeContext);
 
@@ -20,6 +22,48 @@ export default function Home() {
     { id: "completed", label: "Completadas", icon: CheckCircle2 },
   ] as const;
 
+  // ← AGREGAR ESTA PROTECCIÓN
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/auth/login");
+    }
+  }, [user, loading]);
+
+  // ← AGREGAR ESTE LOADING
+  if (loading) {
+    return (
+      <View style={{ 
+        flex: 1, 
+        backgroundColor: theme.background, 
+        justifyContent: "center", 
+        alignItems: "center" 
+      }}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={{ color: theme.text, marginTop: 16 }}>
+          Verificando sesión...
+        </Text>
+      </View>
+    );
+  }
+
+  // ← AGREGAR ESTE GUARD
+  if (!user) {
+    return (
+      <View style={{ 
+        flex: 1, 
+        backgroundColor: theme.background, 
+        justifyContent: "center", 
+        alignItems: "center" 
+      }}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={{ color: theme.text, marginTop: 16 }}>
+          Redirigiendo...
+        </Text>
+      </View>
+    );
+  }
+
+  // ← TU CÓDIGO ORIGINAL A PARTIR DE AQUÍ
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       {/* Header y Filtros - Sin flex para mantener tamaño fijo */}

@@ -1,40 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { View, TextInput, TouchableOpacity, Text, ActivityIndicator, Alert, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, TextInput, TouchableOpacity, Text, ActivityIndicator, Alert } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase } from "../../lib/supabase";
 
 export default function Login() {
   const { user, loading, login } = useAuth();
   const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Borra cualquier sesión guardada localmente
-  useEffect(() => {
-    const clearSession = async () => {
-      await AsyncStorage.clear();
-      await supabase.auth.signOut(); // asegura limpiar Supabase también
-      console.log("Sesión local borrada");
-    };
-    clearSession();
-  }, []);
-
-  // Redirige si ya hay usuario
-  useEffect(() => {
-    if (!loading && user) {
-      router.replace("/"); // redirige solo si hay usuario confirmado
-    }
-  }, [loading, user]);
+  // Evita loops: si ya hay usuario, redirige al index
+  if (!loading && user) {
+    router.replace("/");
+    return null;
+  }
 
   const handleLogin = async () => {
     setSubmitting(true);
     try {
-      await login(email, password); // login del AuthContext
-      router.replace("/"); // redirige después de login exitoso
+      await login(email, password);
+      router.replace("/");
     } catch (err: any) {
       Alert.alert("Error", err.message);
     } finally {
@@ -44,51 +30,47 @@ export default function Login() {
 
   if (loading || submitting) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" />
+      <View className="flex-1 justify-center items-center bg-gradient-to-br from-rose-300 via-purple-400 to-blue-600">
+        <ActivityIndicator size="large" color="#fff" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-        secureTextEntry
-      />
-      <TouchableOpacity onPress={handleLogin} style={styles.button}>
-        <Text style={styles.buttonText}>Iniciar sesión</Text>
-      </TouchableOpacity>
+    <View className="flex-1 justify-center items-center p-6 bg-gradient-to-br from-rose-300 via-purple-400 to-blue-600">
+      <View className="w-full max-w-sm bg-white/50 backdrop-blur-lg rounded-2xl p-6 space-y-4 shadow-lg">
+        <Text className="text-3xl font-bold text-center text-primary mb-4">Iniciar Sesión</Text>
+
+        <TextInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          className="bg-white rounded-lg border border-gray-300 px-4 py-3"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <TextInput
+          placeholder="Contraseña"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          className="bg-white rounded-lg border border-gray-300 px-4 py-3"
+        />
+
+        <TouchableOpacity
+          onPress={handleLogin}
+          className="bg-primary py-3 rounded-xl items-center mt-2 shadow-md"
+        >
+          <Text className="text-white font-bold text-lg">Iniciar sesión</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push("/auth/register")}>
+          <Text className="text-primary text-center mt-2 font-medium">
+            ¿No tienes cuenta? Regístrate
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
-  container: { flex: 1, justifyContent: "center", padding: 20 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  button: {
-    backgroundColor: "#4f46e5",
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: { color: "#fff", fontWeight: "600" },
-});

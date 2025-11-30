@@ -1,22 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, TextInput, TouchableOpacity, Text, Alert } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Register() {
   const { register, user, loading } = useAuth();
   const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Limpiar AsyncStorage al montar
-  useEffect(() => {
-    AsyncStorage.clear().then(() => console.log("Sesión local borrada"));
-  }, []);
-
-  // Evita mostrar formulario si ya hay usuario activo
+  // Redirige si ya hay usuario
   if (!loading && user) {
     router.replace("/");
     return null;
@@ -25,59 +18,47 @@ export default function Register() {
   const handleRegister = async () => {
     try {
       await register(email, password);
-      router.replace("/"); // redirige solo después de registro exitoso
+      router.replace("/");
     } catch (err: any) {
       Alert.alert("Error", err.message);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Crear cuenta</Text>
+    <View className="flex-1 justify-center items-center p-6 bg-gradient-to-br from-rose-300 via-purple-400 to-blue-600">
+      <View className="w-full max-w-sm bg-white/50 backdrop-blur-lg rounded-2xl p-6 space-y-4 shadow-lg">
+        <Text className="text-3xl font-bold text-center text-primary mb-4">Crear Cuenta</Text>
 
-      <TextInput
-        placeholder="Correo"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          className="bg-white rounded-lg border border-gray-300 px-4 py-3"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
 
-      <TextInput
-        placeholder="Contraseña"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Contraseña"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          className="bg-white rounded-lg border border-gray-300 px-4 py-3"
+        />
 
-      <TouchableOpacity onPress={handleRegister} style={styles.button}>
-        <Text style={styles.buttonText}>Registrarse</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleRegister}
+          className="bg-primary py-3 rounded-xl items-center mt-2 shadow-md"
+        >
+          <Text className="text-white font-bold text-lg">Registrarse</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/auth/login")}>
-        <Text style={styles.link}>Ya tengo una cuenta</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/auth/login")}>
+          <Text className="text-primary text-center mt-2 font-medium">
+            ¿Ya tienes cuenta? Inicia sesión
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 20 },
-  title: { fontSize: 32, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  button: {
-    backgroundColor: "#4f46e5",
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: { color: "#fff", fontWeight: "600" },
-  link: { marginTop: 16, textAlign: "center", color: "#4f46e5" },
-});

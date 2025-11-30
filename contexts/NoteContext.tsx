@@ -26,21 +26,20 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const STORAGE_KEY = "NOTES_DATA";
 
-  // Cargar notas al iniciar
   useEffect(() => {
     loadNotes();
   }, []);
 
-  // Guardar en AsyncStorage cuando cambien las notas
   useEffect(() => {
     if (notes.length > 0) {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
     }
   }, [notes]);
 
+  // Cargar notas desde Supabase según usuario
   const loadNotes = async () => {
     try {
-      // 1. Cargar desde AsyncStorage primero (para mostrar algo rápido)
+      // 1. Cargar desde AsyncStorage primero
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
         setNotes(JSON.parse(raw));
@@ -48,32 +47,28 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
 
       // 2. Obtener usuario actual
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      // 3. Cargar desde Supabase
-      let query = supabase
+      // 3. Obtener notas del usuario
+      const { data, error } = await supabase
         .from("notes")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      // Si hay usuario, filtrar por user_id
-      if (user) {
-        query = query.eq("user_id", user.id);
-      } else {
-        // Si no hay usuario, solo notas sin user_id
-        query = query.is("user_id", null);
+      if (error) {
+        console.log("Error loading notes:", error);
+        return;
       }
 
-      const { data, error } = await query;
-
-      if (!error && data) {
+      if (data) {
         const normalized = data.map((n: any) => ({
           id: n.id,
           title: n.title,
-          content: n.content,
+          content: n.content ?? "",
           createdAt: n.created_at,
           completed: n.completed ?? false,
         }));
-
         setNotes(normalized);
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
       }
@@ -82,105 +77,87 @@ export const NoteProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // CREAR NOTA
+  // Crear nota asociada al usuario
   const createNote = async (title: string, content: string) => {
-    
     try {
-      const newNote: Note = {
-        id: Date.now().toString(),
-        title,
-        content,
-        createdAt: new Date().toISOString(),
-        completed: false,
-      };
-
-      // Actualizar estado local inmediatamente
-      setNotes((prev) => [newNote, ...prev]);
-
-      // Obtener usuario actual
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log("No hay usuario logueado, no se puede crear nota");
+        return;
+      }
 
-      // Insertar en Supabase
-      const { error } = await supabase.from("notes").insert({
-        id: newNote.id,
-        title: newNote.title,
-        content: newNote.content,
-        created_at: newNote.createdAt,
-        completed: newNote.completed,
-        user_id: user?.id || null, // null si no hay usuario
-      });
+      const { data, error } = await supabase
+        .from("notes")
+        .insert({
+          title,
+          content,
+          created_at: new Date().toISOString(),
+          completed: false,
+          user_id: user.id,
+        })
+        .select();
 
       if (error) {
-        console.log("Error creating note in Supabase:", error);
-        // Opcional: revertir el cambio local si falla
+        console.log("Error creando nota:", error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        setNotes((prev) => [data[0], ...prev]);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([data[0], ...notes]));
       }
     } catch (e) {
-      console.log("Error creating note:", e);
+      console.log("Error creando nota:", e);
     }
   };
 
-  // ACTUALIZAR NOTA
   const updateNote = async (id: string, title: string, content: string) => {
     try {
-      // Actualizar estado local
       setNotes((prev) =>
         prev.map((n) => (n.id === id ? { ...n, title, content } : n))
       );
 
-      // Actualizar en Supabase
       const { error } = await supabase
         .from("notes")
         .update({ title, content })
         .eq("id", id);
 
-      if (error) {
-        console.log("Error updating note in Supabase:", error);
-      }
+      if (error) console.log("Error updating note:", error);
     } catch (e) {
       console.log("Error updating note:", e);
     }
   };
 
-  // ELIMINAR NOTA
   const deleteNote = async (id: string) => {
     try {
-      // Eliminar del estado local
       setNotes((prev) => prev.filter((n) => n.id !== id));
 
-      // Eliminar de Supabase
       const { error } = await supabase
         .from("notes")
         .delete()
         .eq("id", id);
 
-      if (error) {
-        console.log("Error deleting note in Supabase:", error);
-      }
+      if (error) console.log("Error deleting note:", error);
     } catch (e) {
       console.log("Error deleting note:", e);
     }
   };
 
-  // TOGGLE COMPLETE
   const toggleComplete = async (id: string) => {
     try {
       const note = notes.find((n) => n.id === id);
       if (!note) return;
 
-      // Actualizar estado local
       setNotes((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, completed: !n.completed } : n))
+        prev.map((n) => (n.id === id ? { ...n, completed: !note.completed } : n))
       );
 
-      // Actualizar en Supabase
       const { error } = await supabase
         .from("notes")
         .update({ completed: !note.completed })
         .eq("id", id);
 
-      if (error) {
-        console.log("Error toggling note in Supabase:", error);
-      }
+      if (error) console.log("Error toggling note:", error);
     } catch (e) {
       console.log("Error toggling note:", e);
     }

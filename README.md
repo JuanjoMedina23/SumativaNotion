@@ -1,53 +1,59 @@
-> Edited for use in IDX on 07/09/12
+🌟 NotionJJMM – Tu asistente inteligente de organización
 
-# Welcome to your Expo app 👋
+NotionJJMM combina la organización tipo Notion con el poder de la IA para ayudarte a mantener tus espacios y tareas bajo control.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+📸 Toma fotos desde la app y deja que la IA haga el trabajo: analiza lo que ve y sugiere pasos concretos para organizarlo. Por ejemplo: si tu cama está desordenada, la IA te dirá cómo arreglarla paso a paso.
 
-## Get started
+🚀 Funcionalidades clave
 
-#### Android
+📷 Análisis por fotos: Captura imágenes y la IA las convierte en tareas prácticas.
 
-Android previews are defined as a `workspace.onStart` hook and started as a vscode task when the workspace is opened/started.
+📝 Organización automática: La IA transforma situaciones reales en pasos accionables.
 
-Note, if you can't find the task, either:
-- Rebuild the environment (using command palette: `IDX: Rebuild Environment`), or
-- Run `npm run android -- --tunnel` command manually run android and see the output in your terminal. The device should pick up this new command and switch to start displaying the output from it.
+⚡ Mejora continua: Aprende de tus hábitos y sugiere optimizaciones inteligentes.
 
-In the output of this command/task, you'll find options to open the app in a
+🎯 Espacio para tu gig/proyecto: Añade nuevas ideas, funciones o mejoras fácilmente.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+🎬 Cómo empezar
+Android
+npm install
+npm run android -- --tunnel
 
-You'll also find options to open the app's developer menu, reload the app, and more.
 
-#### Web
+Compatible con dispositivos reales y emuladores.
 
-Web previews will be started and managred automatically. Use the toolbar to manually refresh.
+Visualiza la app en Expo Go o como development build.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Web
+npm run web
 
-## Get a fresh project
 
-When you're ready, run:
+Previsualización en navegador lista para desarrollo rápido.
 
-```bash
-npm run reset-project
-```
+🗂 Estructura del proyecto
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+app/ → Pantallas y componentes principales.
 
-## Learn more
+assets/ → Imágenes, iconos y recursos.
 
-To learn more about developing your project with Expo, look at the following resources:
+package.json → Dependencias y scripts del proyecto.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+🌟 Próximas mejoras / gig
 
-## Join the community
+IA más avanzada para reconocer múltiples objetos en la misma foto.
 
-Join our community of developers creating universal apps.
+Asignación automática de tareas a miembros de un equipo.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Historial visual de fotos y acciones completadas.
+
+📌 Recursos
+
+Documentación de Expo
+
+Tutorial de Expo
+
+Comunidad de Expo en Discord
+
+
+https://github.com/user-attachments/assets/48c96ea9-c340-45fb-8040-f6a5ace6a69f
+
